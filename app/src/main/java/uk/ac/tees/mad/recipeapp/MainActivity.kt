@@ -11,6 +11,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import uk.ac.tees.mad.recipeapp.ui.HomeScreen
+import uk.ac.tees.mad.recipeapp.ui.LoginScreen
+import uk.ac.tees.mad.recipeapp.ui.ProfileScreen
+import uk.ac.tees.mad.recipeapp.ui.RecipeDetailScreen
+import uk.ac.tees.mad.recipeapp.ui.SplashScreen
+import uk.ac.tees.mad.recipeapp.ui.UserRecipeScreen
 import uk.ac.tees.mad.recipeapp.ui.theme.RecipeAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,10 +29,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RecipeAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val navController = rememberNav
-                    NavigationGraph(navController = nav)
-                }
+                NavigationGraph(navController = rememberNavController())
             }
         }
     }
@@ -35,9 +42,9 @@ fun NavigationGraph(navController: NavHostController) {
         composable("login") { LoginScreen(navController) }
         composable("home") { HomeScreen(navController) }
         composable("recipeDetails/{recipeId}") { backStackEntry ->
-            RecipeDetailsScreen(recipeId = backStackEntry.arguments?.getString("recipeId"))
+            RecipeDetailScreen(recipeId = backStackEntry.arguments?.getString("recipeId"))
         }
-        composable("userRecipes") { UserRecipesScreen(navController) }
+        composable("userRecipes") { UserRecipeScreen(navController) }
         composable("profile") { ProfileScreen(navController) }
     }
 }
