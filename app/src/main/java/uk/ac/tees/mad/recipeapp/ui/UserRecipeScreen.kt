@@ -8,6 +8,6 @@ import androidx.navigation.NavHostController
 @Composable
 fun UserRecipeScreen(navController: NavHostController) {
     Column {
-        Text(text = "login")
+        Text(text = "UsrEcip")
     }
 }

@@ -8,6 +8,6 @@ import androidx.navigation.NavHostController
 @Composable
 fun ProfileScreen(navController: NavHostController) {
     Column {
-        Text(text = "login")
+        Text(text = "Profile")
     }
 }

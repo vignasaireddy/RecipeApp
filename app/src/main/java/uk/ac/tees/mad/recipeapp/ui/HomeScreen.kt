@@ -9,6 +9,6 @@ import androidx.navigation.NavHostController
 @Composable
 fun HomeScreen(navController: NavHostController) {
     Column {
-        Text(text = "login")
+        Text(text = "Home")
     }
 }
