@@ -7,6 +7,7 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.Firebase
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
 import uk.ac.tees.mad.recipeapp.data.SignInResult
 import uk.ac.tees.mad.recipeapp.data.UserData
@@ -16,6 +17,7 @@ class GoogleAuthUiClient(
     private val signInClient: SignInClient
 ) {
     private val firebaseAuth = Firebase.auth
+    val firestore = Firebase.firestore
 
     suspend fun initiateSignIn(): IntentSender? {
         return try {
@@ -34,15 +36,22 @@ class GoogleAuthUiClient(
         val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
 
         return try {
-            val user = firebaseAuth.signInWithCredential(firebaseCredential).await().user
+            val authResult = firebaseAuth.signInWithCredential(firebaseCredential).await()
+            val user = authResult.user
+            val userData = user?.let {
+                UserData(
+                    userId = it.uid,
+                    username = it.displayName,
+                    email = it.email
+                )
+            }
+
+            if (userData != null) {
+                saveUserDataToFirestore(userData)
+            }
+
             SignInResult(
-                data = user?.let {
-                    UserData(
-                        userId = it.uid,
-                        username = it.displayName,
-                        email = it.email
-                    )
-                },
+                data = userData,
                 errorMessage = null
             )
         } catch (exception: Exception) {
@@ -52,6 +61,21 @@ class GoogleAuthUiClient(
                 data = null,
                 errorMessage = exception.message
             )
+        }
+    }
+
+    private suspend fun saveUserDataToFirestore(userData: UserData) {
+        try {
+            val documentSnapshot = firestore.collection("users").document(userData.userId).get().await()
+            if (!documentSnapshot.exists()) {
+                firestore.collection("users")
+                    .document(userData.userId)
+                    .set(userData)
+                    .await()
+            }
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+            if (exception is CancellationException) throw exception
         }
     }
 
@@ -81,7 +105,7 @@ class GoogleAuthUiClient(
                 BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                     .setSupported(true)
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(ServerClient)
+                    .setServerClientId("306161792065-pceahnog34ksuh6eep82sr22fanhhi1p.apps.googleusercontent.com")
                     .build()
             )
             .setAutoSelectEnabled(true)

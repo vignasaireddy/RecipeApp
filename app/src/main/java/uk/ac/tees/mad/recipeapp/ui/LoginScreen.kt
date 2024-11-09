@@ -19,19 +19,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.google.android.gms.auth.api.identity.Identity
+import kotlinx.coroutines.launch
 import uk.ac.tees.mad.recipeapp.R
 
 @Composable
 fun LoginScreen(
     navController: NavHostController,
 ) {
+    val context = LocalContext.current
+    val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(Identity.getSignInClient(context))
+    }
+    val scope = rememberCoroutineScope()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -46,7 +57,9 @@ fun LoginScreen(
             Image(
                 painter = painterResource(id = R.drawable.recipe),
                 contentDescription = "Recipe App Logo",
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier
+                    .size(200.dp)
+                    .clip(RoundedCornerShape(20.dp))
             )
 
             Text(
@@ -65,7 +78,9 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-
+                    scope.launch {
+                        googleAuthUiClient.initiateSignIn()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
