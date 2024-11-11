@@ -1,5 +1,10 @@
 package uk.ac.tees.mad.recipeapp.ui
 
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +37,7 @@ import androidx.navigation.NavHostController
 import com.google.android.gms.auth.api.identity.Identity
 import kotlinx.coroutines.launch
 import uk.ac.tees.mad.recipeapp.R
+import uk.ac.tees.mad.recipeapp.data.SignInResult
 
 @Composable
 fun LoginScreen(
@@ -42,7 +48,26 @@ fun LoginScreen(
         GoogleAuthUiClient(Identity.getSignInClient(context))
     }
     val scope = rememberCoroutineScope()
-
+    val launcher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                scope.launch {
+                    val singInResult = googleAuthUiClient.handleSignInResult(
+                        intent = result.data ?: return@launch
+                    )
+                    if (singInResult.data != null) {
+                        navController.navigate("home")
+                    }
+                    if (singInResult.errorMessage != null) {
+                        Toast.makeText(
+                            context,
+                            singInResult.errorMessage,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -79,7 +104,12 @@ fun LoginScreen(
             Button(
                 onClick = {
                     scope.launch {
-                        googleAuthUiClient.initiateSignIn()
+                        val signInIntentSender = googleAuthUiClient.initiateSignIn()
+                        launcher.launch(
+                            IntentSenderRequest.Builder(
+                                signInIntentSender ?: return@launch
+                            ).build()
+                        )
                     }
                 },
                 modifier = Modifier
