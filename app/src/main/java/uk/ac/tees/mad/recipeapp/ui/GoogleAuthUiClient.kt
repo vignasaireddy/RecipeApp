@@ -16,6 +16,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class GoogleAuthUiClient(
     private val signInClient: SignInClient
 ) {
+
     private val firebaseAuth = Firebase.auth
     val firestore = Firebase.firestore
 
@@ -47,7 +48,12 @@ class GoogleAuthUiClient(
             }
 
             if (userData != null) {
-                saveUserDataToFirestore(userData)
+                saveUserDataToFirestore(userData, exception = {
+                    SignInResult(
+                        data = null,
+                        errorMessage = it.message
+                    )
+                })
             }
 
             SignInResult(
@@ -64,18 +70,22 @@ class GoogleAuthUiClient(
         }
     }
 
-    private suspend fun saveUserDataToFirestore(userData: UserData) {
+    private suspend fun saveUserDataToFirestore(
+        userData: UserData,
+        exception: (Exception) -> Unit
+    ) {
         try {
-            val documentSnapshot = firestore.collection("users").document(userData.userId).get().await()
+            val documentSnapshot =
+                firestore.collection("users").document(userData.userId).get().await()
             if (!documentSnapshot.exists()) {
                 firestore.collection("users")
                     .document(userData.userId)
-                    .set(userData)
+                    .set(userData.toMap())
                     .await()
             }
         } catch (exception: Exception) {
             exception.printStackTrace()
-            if (exception is CancellationException) throw exception
+            if (exception is CancellationException) exception(exception)
         }
     }
 

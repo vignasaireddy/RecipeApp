@@ -1,6 +1,5 @@
 buildscript {
     dependencies {
-        classpath("com.google.dagger:hilt-android-gradle-plugin:2.47")
         classpath("com.google.gms:google-services:4.4.0")
     }
 }
@@ -11,5 +10,4 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android) apply false
     id("com.google.gms.google-services") version "4.4.1" apply false
     id("com.google.devtools.ksp") version "1.9.21-1.0.15" apply false
-    id ("com.google.dagger.hilt.android") version "2.47" apply false
 }

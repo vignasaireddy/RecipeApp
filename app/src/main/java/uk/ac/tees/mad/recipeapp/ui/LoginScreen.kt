@@ -20,11 +20,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,10 +47,11 @@ import uk.ac.tees.mad.recipeapp.data.SignInResult
 @Composable
 fun LoginScreen(
     navController: NavHostController,
+    googleAuthUiClient: GoogleAuthUiClient
 ) {
     val context = LocalContext.current
-    val googleAuthUiClient by lazy {
-        GoogleAuthUiClient(Identity.getSignInClient(context))
+    var isGoogleSignInInProgress by remember {
+        mutableStateOf(false)
     }
     val scope = rememberCoroutineScope()
     val launcher =
@@ -56,6 +62,7 @@ fun LoginScreen(
                         intent = result.data ?: return@launch
                     )
                     if (singInResult.data != null) {
+                        isGoogleSignInInProgress = false
                         navController.navigate("home")
                     }
                     if (singInResult.errorMessage != null) {
@@ -64,10 +71,15 @@ fun LoginScreen(
                             singInResult.errorMessage,
                             Toast.LENGTH_LONG
                         ).show()
+                        isGoogleSignInInProgress = false
+
                     }
                 }
             }
         }
+
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -104,6 +116,7 @@ fun LoginScreen(
             Button(
                 onClick = {
                     scope.launch {
+                        isGoogleSignInInProgress = true
                         val signInIntentSender = googleAuthUiClient.initiateSignIn()
                         launcher.launch(
                             IntentSenderRequest.Builder(
@@ -128,8 +141,15 @@ fun LoginScreen(
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
-
-                Text(text = "Sign in with Google")
+                if (isGoogleSignInInProgress) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFFFFFFFF),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(text = "Sign in with Google")
+                }
             }
         }
     }

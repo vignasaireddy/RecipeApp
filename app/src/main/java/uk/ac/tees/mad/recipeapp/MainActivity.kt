@@ -10,11 +10,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.auth.api.identity.Identity
+import uk.ac.tees.mad.recipeapp.ui.GoogleAuthUiClient
 import uk.ac.tees.mad.recipeapp.ui.HomeScreen
 import uk.ac.tees.mad.recipeapp.ui.LoginScreen
 import uk.ac.tees.mad.recipeapp.ui.ProfileScreen
@@ -37,10 +40,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavigationGraph(navController: NavHostController) {
+    val context = LocalContext.current
+    val googleAuthUiClient by lazy {
+        GoogleAuthUiClient(Identity.getSignInClient(context))
+    }
     NavHost(navController, startDestination = "splash") {
         composable("splash") { SplashScreen(navController) }
-        composable("login") { LoginScreen(navController) }
-        composable("home") { HomeScreen(navController) }
+        composable("login") { LoginScreen(navController, googleAuthUiClient) }
+        composable("home") { HomeScreen(navController, googleAuthUiClient) }
         composable("recipeDetails/{recipeId}") { backStackEntry ->
             RecipeDetailScreen(recipeId = backStackEntry.arguments?.getString("recipeId"))
         }
