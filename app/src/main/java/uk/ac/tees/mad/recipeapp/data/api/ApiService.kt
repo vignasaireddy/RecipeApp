@@ -10,6 +10,7 @@ interface ApiService {
         @Query("type") type: String = "public",
         @Query("app_id") appId: String,
         @Query("app_key") appKey: String,
-        @Query("random") random: Boolean = true
+        @Query("random") random: Boolean = true,
+        @Query("diet") diet: String = "balanced",
     ): ApiResponse
 }

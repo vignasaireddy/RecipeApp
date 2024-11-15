@@ -6,11 +6,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.launch
+import uk.ac.tees.mad.recipeapp.viewmodels.RecipeViewModel
 
 @Composable
 fun HomeScreen(navController: NavHostController, googleAuthUiClient: GoogleAuthUiClient) {
+    val recipeViewModel: RecipeViewModel = viewModel()
+
     val scope = rememberCoroutineScope()
     Column {
         Text(text = "Home")
