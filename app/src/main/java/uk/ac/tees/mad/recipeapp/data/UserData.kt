@@ -3,7 +3,8 @@ package uk.ac.tees.mad.recipeapp.data
 data class UserData(
     val userId: String,
     val username: String?,
-    val email: String?
+    val email: String?,
+    val imageUrl: String? = null
 ) {
     fun toMap(): Map<String, Any?> {
         return mapOf(

@@ -89,13 +89,21 @@ class GoogleAuthUiClient(
         }
     }
 
-    fun getCurrentUser(): UserData? {
-        return firebaseAuth.currentUser?.let {
+    suspend fun getCurrentUser(): UserData? {
+        return try {
+            val result = firestore.collection("users")
+                .document(firebaseAuth.currentUser?.uid ?: "")
+                .get().await()
             UserData(
-                userId = it.uid,
-                username = it.displayName,
-                email = it.email
+                userId = result.getString("userId") ?: "",
+                username = result.getString("username") ?: "",
+                email = result.getString("email") ?: "",
+                imageUrl = result.getString("imageUrl") ?: ""
             )
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+            if (exception is CancellationException) throw exception
+            null
         }
     }
 

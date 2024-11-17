@@ -8,11 +8,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import uk.ac.tees.mad.recipeapp.data.Recipe
+import uk.ac.tees.mad.recipeapp.data.UserData
 import uk.ac.tees.mad.recipeapp.data.api.RetrofitInstance
+import uk.ac.tees.mad.recipeapp.ui.GoogleAuthUiClient
 
 class RecipeViewModel : ViewModel() {
     private val _recipes = MutableStateFlow<List<Recipe>>(emptyList())
     val recipes = _recipes.asStateFlow()
+
+    private val _userData = MutableStateFlow<UserData?>(null)
+    val userData = _userData.asStateFlow()
 
     private val _loading = MutableStateFlow(true)
     val loading = _loading.asStateFlow()
@@ -20,6 +25,7 @@ class RecipeViewModel : ViewModel() {
     init {
         fetchRecipes()
     }
+
     private fun fetchRecipes() {
         viewModelScope.launch {
             try {
@@ -34,6 +40,12 @@ class RecipeViewModel : ViewModel() {
             } finally {
                 _loading.value = false
             }
+        }
+    }
+
+    fun getUserData(googleAuthUiClient: GoogleAuthUiClient) {
+        viewModelScope.launch {
+            _userData.value = googleAuthUiClient.getCurrentUser()
         }
     }
 }
