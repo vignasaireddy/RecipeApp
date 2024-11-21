@@ -29,10 +29,7 @@ class RecipeViewModel : ViewModel() {
     private fun fetchRecipes() {
         viewModelScope.launch {
             try {
-                val response = RetrofitInstance.api.getRecipes(
-                    appId = "a99fe844",
-                    appKey = "d3efe8d9604eead8938f4f2c231f1b48"
-                )
+                val response = RetrofitInstance.api.getRecipes()
                 Log.d("API RESPONSE", response.hits.toString())
                 _recipes.value = response.hits.map { it.recipe }
             } catch (e: Exception) {

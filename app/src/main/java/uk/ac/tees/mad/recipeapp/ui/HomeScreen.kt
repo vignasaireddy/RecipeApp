@@ -1,5 +1,6 @@
 package uk.ac.tees.mad.recipeapp.ui
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -180,7 +181,10 @@ fun HomeScreen(navController: NavHostController, googleAuthUiClient: GoogleAuthU
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyVerticalGrid(columns = GridCells.Fixed(2)) {
                         items(recipes) { recipe ->
-                            RecipeItem(recipe)
+                            RecipeItem(recipe) {
+                                val encodedUri = Uri.encode(recipe.uri)
+                                navController.navigate("recipe/$encodedUri")
+                            }
                         }
                     }
                 }
@@ -192,14 +196,12 @@ fun HomeScreen(navController: NavHostController, googleAuthUiClient: GoogleAuthU
 }
 
 @Composable
-fun RecipeItem(recipe: Recipe) {
+fun RecipeItem(recipe: Recipe, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        onClick = {
-
-        },
+        onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = yellow.copy(0.9f)
         ),

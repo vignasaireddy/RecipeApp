@@ -5,5 +5,11 @@ data class Recipe(
     val label: String,
     val image: String,
     val ingredientLines: List<String>,
-    val url: String
+    val url: String,
+    val totalTime: Double,
+    val calories: Double,
+    val totalWeight: Double,
+    val cuisineType: List<String>,
+    val dishType: List<String>,
+    val mealType: List<String>,
 )
