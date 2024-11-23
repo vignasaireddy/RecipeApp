@@ -19,11 +19,10 @@ class TimerService : Service() {
         val recipeName = intent?.getStringExtra("recipeName") ?: "current"
         timer = object : CountDownTimer(duration, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                TODO("Not yet implemented")
             }
 
             override fun onFinish() {
-                sendNotification("Your recipe is cooked.")
+                sendNotification(recipeName)
                 stopSelf()
             }
         }
