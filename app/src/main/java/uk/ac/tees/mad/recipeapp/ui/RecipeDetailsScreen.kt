@@ -1,8 +1,6 @@
 package uk.ac.tees.mad.recipeapp.ui
 
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
+import android.os.Build
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,16 +25,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDefaults
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,22 +46,39 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import uk.ac.tees.mad.recipeapp.TimerService
 import uk.ac.tees.mad.recipeapp.ui.theme.yellow
 import uk.ac.tees.mad.recipeapp.viewmodels.RecipeDetailsViewModel
+import uk.ac.tees.mad.recipeapp.viewmodels.TimerState
 import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
     val viewModel: RecipeDetailsViewModel = viewModel()
     val recipe by viewModel.recipeDetails.collectAsState()
     val loading by viewModel.loading.collectAsState()
+    val timerState by viewModel.timerState.collectAsState()
+    val context = LocalContext.current
+    val (remainingTimer, setRemainingTimer) = remember {
+        mutableStateOf(0L)
+    }
+    val (formattedTimer, setFormattedTimer) = remember {
+        mutableStateOf("00:00")
+    }
+
+    val notificationPermissionState =
+        rememberPermissionState(android.Manifest.permission.POST_NOTIFICATIONS)
+
     val uriHandler = LocalUriHandler.current
     val snackbarHostState = remember {
         SnackbarHostState()
@@ -129,13 +140,13 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = "Calories: ${df.format(recipe?.calories)} kcal",
+                            text = "Calories: ${df.format(recipe?.calories ?: 0.0)} kcal",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = "Total Weight: ${df.format(recipe?.totalWeight)} g",
+                            text = "Total Weight: ${df.format(recipe?.totalWeight ?: 0.0)} g",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -205,10 +216,23 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                                     )
                                 }
                             } else {
-                                startTimer(
-                                    recipeName = recipe?.label ?: "",
-                                    timerDouble = recipe?.totalTime ?: 0.0
-                                )
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    if (notificationPermissionState.status.isGranted) {
+                                        viewModel.startTimer(
+                                            recipeName = recipe?.label ?: "",
+                                            duration = recipe?.totalTime ?: 0.0,
+                                            context = context
+                                        )
+                                    } else {
+                                        notificationPermissionState.launchPermissionRequest()
+                                    }
+                                } else {
+                                    viewModel.startTimer(
+                                        recipeName = recipe?.label ?: "",
+                                        duration = recipe?.totalTime ?: 0.0,
+                                        context = context
+                                    )
+                                }
                             }
                         } else {
                             scope.launch {
@@ -234,7 +258,32 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Start Timer")
+                    when (timerState) {
+                        is TimerState.Stopped -> Text("Start Timer")
+                        is TimerState.Running -> {
+                            val remainingTime = (timerState as TimerState.Running).timeRemaining
+                            setRemainingTimer(remainingTimer)
+                            LaunchedEffect(Unit) {
+                                scope.launch {
+                                    delay(1000)
+                                    while (remainingTimer > 0) {
+                                        delay(1000)
+                                        setRemainingTimer(remainingTimer - 1000)
+                                        val formattedTime = SimpleDateFormat(
+                                            "mm:ss",
+                                            Locale.getDefault()
+                                        )
+                                        setFormattedTimer(formattedTime.format(Date(remainingTimer)))
+                                    }
+                                }
+                            }
+
+                            Text("Remaining Time: ${(formattedTimer)} minutes")
+                        }
+
+
+                        is TimerState.Finished -> Text("Timer Finished")
+                    }
                 }
             }
         }
