@@ -1,6 +1,7 @@
 package uk.ac.tees.mad.recipeapp.ui
 
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,11 +71,39 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
     val loading by viewModel.loading.collectAsState()
     val timerState by viewModel.timerState.collectAsState()
     val context = LocalContext.current
-    val (remainingTimer, setRemainingTimer) = remember {
+    var remainingTimer by remember {
         mutableStateOf(0L)
     }
-    val (formattedTimer, setFormattedTimer) = remember {
+    var formattedTimer by remember {
         mutableStateOf("00:00")
+    }
+    LaunchedEffect(timerState) {
+        when (timerState) {
+            is TimerState.Running -> {
+                val remainingTime = (timerState as TimerState.Running).timeRemaining
+
+                Log.d("Timer", "Remaining Time: $remainingTime")
+                remainingTimer = remainingTime
+                while (remainingTimer > 0) {
+                    delay(1000)
+                    remainingTimer -= 1000
+                    val formattedTime = SimpleDateFormat(
+                        "mm:ss",
+                        Locale.getDefault()
+                    )
+                    Log.d("Timer", "Before Formatted Time: $remainingTimer")
+
+                    formattedTimer = "${remainingTimer / 1000 / 60}:${(remainingTimer / 1000) % 60}"
+                    Log.d("Timer", "Formatted Time: $formattedTimer")
+
+                }
+            }
+
+            else -> {
+
+            }
+        }
+
     }
 
     val notificationPermissionState =
@@ -261,22 +291,6 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                     when (timerState) {
                         is TimerState.Stopped -> Text("Start Timer")
                         is TimerState.Running -> {
-                            val remainingTime = (timerState as TimerState.Running).timeRemaining
-                            setRemainingTimer(remainingTimer)
-                            LaunchedEffect(Unit) {
-                                scope.launch {
-                                    delay(1000)
-                                    while (remainingTimer > 0) {
-                                        delay(1000)
-                                        setRemainingTimer(remainingTimer - 1000)
-                                        val formattedTime = SimpleDateFormat(
-                                            "mm:ss",
-                                            Locale.getDefault()
-                                        )
-                                        setFormattedTimer(formattedTime.format(Date(remainingTimer)))
-                                    }
-                                }
-                            }
 
                             Text("Remaining Time: ${(formattedTimer)} minutes")
                         }

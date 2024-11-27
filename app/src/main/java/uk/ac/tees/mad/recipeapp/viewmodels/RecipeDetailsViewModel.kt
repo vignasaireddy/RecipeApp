@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Constraints
 import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -66,13 +67,22 @@ class RecipeDetailsViewModel : ViewModel() {
             val request = OneTimeWorkRequestBuilder<TimerWorker>()
                 .setInputData(data)
                 .setConstraints(constraints)
+
                 .build()
-            WorkManager.getInstance(context).enqueue(request)
+            WorkManager.getInstance(context)
+                .enqueueUniqueWork("timer_worker_$recipeName", ExistingWorkPolicy.REPLACE, request)
+            Log.d("Converted Time", duration.toString())
             _timerState.value = TimerState.Running(convertDoubleToMillies(duration))
         } else {
-            WorkManager.getInstance(context).cancelUniqueWork("timer_work")
+            WorkManager.getInstance(context).cancelUniqueWork("timer_worker_$recipeName")
             _timerState.value = TimerState.Stopped
         }
+    }
+
+    fun cancelNotification(context: Context, recipeName: String) {
+        WorkManager.getInstance(context).cancelUniqueWork("timer_worker_$recipeName")
+        Log.d("RecipeDetailsViewModel", "cancelNotification: $recipeName")
+        _timerState.value = TimerState.Stopped
     }
 }
 
