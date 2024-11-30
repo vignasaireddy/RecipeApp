@@ -13,3 +13,9 @@ data class Recipe(
     val dishType: List<String>,
     val mealType: List<String>,
 )
+
+data class FirestoreRecipe(
+    val name: String,
+    val ingredients: List<String>,
+    val instructions: List<String>,
+)

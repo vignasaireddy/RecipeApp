@@ -100,7 +100,7 @@ fun HomeScreen(navController: NavHostController, googleAuthUiClient: GoogleAuthU
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-
+                    navController.navigate("addRecipe")
                 },
                 modifier = Modifier
                     .padding(16.dp),

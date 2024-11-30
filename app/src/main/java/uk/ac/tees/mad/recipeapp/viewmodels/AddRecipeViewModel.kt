@@ -16,6 +16,9 @@ class AddRecipeViewModel : ViewModel() {
     private val _instructionsState = mutableStateOf("")
     val instructionsState = _instructionsState
 
+    private val _isLoading = mutableStateOf(false)
+    val isLoading = _isLoading
+
     fun setRecipeName(name: String) {
         _recipeNameState.value = name
     }
@@ -28,19 +31,24 @@ class AddRecipeViewModel : ViewModel() {
         _instructionsState.value = instructions
     }
 
-    fun saveRecipe() {
+    fun saveRecipe(onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        _isLoading.value = true
         val recipe = FirestoreRecipe(
             name = recipeNameState.value,
             ingredients = ingredientsState.value.split("\n"),
             instructions = instructionsState.value.split("\n")
         )
-        saveRecipeToFirestore(recipe)
-    }
-
-    private fun saveRecipeToFirestore(recipe: FirestoreRecipe) {
         val recipeDocument = Firebase.firestore
             .collection("recipes")
             .document()
-        recipeDocument.set(recipe)
+        recipeDocument.set(recipe).addOnSuccessListener {
+            _isLoading.value = false
+            onSuccess.invoke()
+        }.addOnFailureListener {
+            _isLoading.value = false
+            it.printStackTrace()
+            onFailure.invoke(it.message ?: "Error saving")
+        }
     }
+
 }
