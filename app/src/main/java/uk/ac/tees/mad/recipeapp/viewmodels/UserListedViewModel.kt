@@ -2,6 +2,7 @@ package uk.ac.tees.mad.recipeapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,10 +25,15 @@ class UserListedRecipesViewModel : ViewModel() {
     private fun fetchUserRecipes() {
         Firebase.firestore
             .collection("recipes")
+            .whereEqualTo("userId", Firebase.auth.currentUser?.uid)
             .get()
             .addOnSuccessListener { querySnapshot ->
                 val recipes = querySnapshot.documents.mapNotNull { document ->
-                    document.toObject(FirestoreRecipe::class.java)
+                    FirestoreRecipe(
+                        name = document.getString("name") ?: "",
+                        ingredients = document["ingredients"] as List<String>? ?: emptyList(),
+                        instructions = document["instructions"] as List<String>? ?: emptyList()
+                    )
                 }
                 _recipesState.value = recipes
                 _loadingState.value = false
@@ -37,6 +43,7 @@ class UserListedRecipesViewModel : ViewModel() {
                 _loadingState.value = false
             }
     }
+
 
     fun clearSnackbarMessage() {
         _snackbarMessage.value = null

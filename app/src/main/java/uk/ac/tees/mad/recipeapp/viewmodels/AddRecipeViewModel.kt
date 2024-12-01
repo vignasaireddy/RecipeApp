@@ -3,6 +3,7 @@ package uk.ac.tees.mad.recipeapp.viewmodels
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.firestore
 import uk.ac.tees.mad.recipeapp.data.FirestoreRecipe
 
@@ -38,17 +39,24 @@ class AddRecipeViewModel : ViewModel() {
             ingredients = ingredientsState.value.split("\n"),
             instructions = instructionsState.value.split("\n")
         )
-        val recipeDocument = Firebase.firestore
+        val map = mapOf(
+            "name" to recipe.name,
+            "ingredients" to recipe.ingredients,
+            "instructions" to recipe.instructions,
+            "userId" to Firebase.auth.currentUser?.uid
+        )
+        Firebase.firestore
             .collection("recipes")
             .document()
-        recipeDocument.set(recipe).addOnSuccessListener {
-            _isLoading.value = false
-            onSuccess.invoke()
-        }.addOnFailureListener {
-            _isLoading.value = false
-            it.printStackTrace()
-            onFailure.invoke(it.message ?: "Error saving")
-        }
+            .set(map)
+            .addOnSuccessListener {
+                _isLoading.value = false
+                onSuccess.invoke()
+            }.addOnFailureListener {
+                _isLoading.value = false
+                it.printStackTrace()
+                onFailure.invoke(it.message ?: "Error saving")
+            }
     }
 
 }
