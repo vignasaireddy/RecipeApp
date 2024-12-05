@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.android.gms.auth.api.identity.Identity
 import uk.ac.tees.mad.recipeapp.ui.AddRecipeScreen
+import uk.ac.tees.mad.recipeapp.ui.EditProfileScreen
 import uk.ac.tees.mad.recipeapp.ui.GoogleAuthUiClient
 import uk.ac.tees.mad.recipeapp.ui.HomeScreen
 import uk.ac.tees.mad.recipeapp.ui.LoginScreen
@@ -71,5 +72,6 @@ fun NavigationGraph(navController: NavHostController) {
         composable("addRecipe") { AddRecipeScreen(onRecipeSaved = { navController.popBackStack() }) }
         composable("userRecipes") { UserRecipeScreen(navController = navController) }
         composable("profile") { ProfileScreen(navController, googleAuthUiClient) }
+        composable("editProfile") { EditProfileScreen()}
     }
 }

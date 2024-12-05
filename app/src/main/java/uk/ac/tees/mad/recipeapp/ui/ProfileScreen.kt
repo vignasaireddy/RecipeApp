@@ -131,7 +131,7 @@ fun ProfileScreen(navController: NavHostController, googleAuthUiClient: GoogleAu
                     }
 
                     ProfileButtons(text = "Edit profile", icon = Icons.Outlined.EditNote) {
-
+                        navController.navigate("editProfile")
                     }
                     ProfileButtons(text = "Sign out", icon = Icons.AutoMirrored.Outlined.Logout) {
                         scope.launch {
