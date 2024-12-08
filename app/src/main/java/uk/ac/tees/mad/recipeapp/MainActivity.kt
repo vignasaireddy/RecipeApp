@@ -72,6 +72,11 @@ fun NavigationGraph(navController: NavHostController) {
         composable("addRecipe") { AddRecipeScreen(onRecipeSaved = { navController.popBackStack() }) }
         composable("userRecipes") { UserRecipeScreen(navController = navController) }
         composable("profile") { ProfileScreen(navController, googleAuthUiClient) }
-        composable("editProfile") { EditProfileScreen()}
+        composable("editProfile") {
+            EditProfileScreen(
+                navController = navController,
+                googleAuthUiClient = googleAuthUiClient
+            )
+        }
     }
 }

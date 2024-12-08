@@ -30,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,10 +49,15 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import uk.ac.tees.mad.recipeapp.viewmodels.ProfileViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun EditProfileScreen(navController: NavHostController, viewModel: ProfileViewModel) {
+fun EditProfileScreen(
+    navController: NavHostController,
+    googleAuthUiClient: GoogleAuthUiClient,
+    viewModel: ProfileViewModel = viewModel()
+) {
     val userData = viewModel.userData.collectAsState()
     val loading by viewModel.loading.collectAsState(initial = false)
     val context = LocalContext.current
@@ -59,7 +65,30 @@ fun EditProfileScreen(navController: NavHostController, viewModel: ProfileViewMo
     var name by remember { mutableStateOf(userData.value?.username ?: "") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
+    val cameraPermissionState =
+        rememberPermissionState(permission = android.Manifest.permission.CAMERA)
 
+    val galleryLauncher =
+        rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
+            imageUri = uri
+        }
+
+    val requestCameraLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) {
+                imageUri?.let { uri ->
+
+                }
+            }
+        }
+
+    LaunchedEffect(Unit) {
+        viewModel.getUserData(googleAuthUiClient)
+    }
+
+    LaunchedEffect(userData) {
+        name = userData.value?.username ?: ""
+    }
 
     Scaffold(
         topBar = {
@@ -87,11 +116,16 @@ fun EditProfileScreen(navController: NavHostController, viewModel: ProfileViewMo
                     contentDescription = "Profile Picture",
                     modifier = Modifier.run {
                         size(100.dp)
-                                        .clip(CircleShape)
-                                        .clickable {
-
-                                        }
-                                        .border(2.dp, Color.Gray, CircleShape)
+                            .clip(CircleShape)
+                            .clickable {
+                                showImagePickerOptions(
+                                    context,
+                                    cameraPermissionState,
+                                    galleryLauncher,
+                                    requestCameraLauncher
+                                )
+                            }
+                            .border(2.dp, Color.Gray, CircleShape)
                     }
                 )
 
@@ -122,3 +156,32 @@ fun EditProfileScreen(navController: NavHostController, viewModel: ProfileViewMo
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
+private fun showImagePickerOptions(
+    context: Context,
+    cameraPermissionState: PermissionState,
+    galleryLauncher: ActivityResultLauncher<String>,
+    requestCameraLauncher: ActivityResultLauncher<Uri>
+) {
+    val options = arrayOf("Camera", "Gallery")
+
+    AlertDialog.Builder(context)
+        .setTitle("Select Image Source")
+        .setItems(options) { dialog, which ->
+            when (which) {
+                0 -> {
+                    if (cameraPermissionState.status.isGranted) {
+
+                    } else {
+                        cameraPermissionState.launchPermissionRequest()
+                    }
+                }
+
+                1 -> {
+                    galleryLauncher.launch("image/*")
+
+                }
+            }
+        }
+        .show()
+}
