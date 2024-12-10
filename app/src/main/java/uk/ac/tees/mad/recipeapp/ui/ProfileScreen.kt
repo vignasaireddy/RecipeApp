@@ -115,8 +115,8 @@ fun ProfileScreen(navController: NavHostController, googleAuthUiClient: GoogleAu
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = user?.location ?: "Current Location",
-                                style = MaterialTheme.typography.headlineSmall,
+                                text = user?.email ?: "",
+                                style = MaterialTheme.typography.titleMedium,
                                 color = Color.Gray
                             )
                         }

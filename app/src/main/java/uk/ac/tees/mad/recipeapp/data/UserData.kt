@@ -4,7 +4,7 @@ data class UserData(
     val userId: String,
     val username: String?,
     val email: String?,
-    val imageUrl: String? = null,
+    var imageUrl: String? = null,
     val location: String? = null
 ) {
     fun toMap(): Map<String, Any?> {

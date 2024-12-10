@@ -21,6 +21,10 @@ class ProfileViewModel : ViewModel() {
     private val _loading = MutableStateFlow(true)
     val loading = _loading.asStateFlow()
 
+    private val _updating = MutableStateFlow(false)
+    val updating = _updating.asStateFlow()
+
+
     fun getUserData(googleAuthUiClient: GoogleAuthUiClient) {
         viewModelScope.launch {
             _loading.value = true
@@ -35,9 +39,9 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    fun updateUserProfile(name: String, imageUri: Uri?) {
+    fun updateUserProfile(name: String, imageUri: Uri?, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            _loading.value = true
+            _updating.value = true
             try {
                 val updatedUser = _userData.value?.copy(username = name) ?: return@launch
 
@@ -55,12 +59,12 @@ class ProfileViewModel : ViewModel() {
                         .set(updatedUser)
                         .await()
                 }
-
                 _userData.value = updatedUser
+                onSuccess()
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                _loading.value = false
+                _updating.value = false
             }
         }
     }

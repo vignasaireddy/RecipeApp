@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -50,6 +52,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import uk.ac.tees.mad.recipeapp.viewmodels.ProfileViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import uk.ac.tees.mad.recipeapp.ui.theme.yellow
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -59,7 +62,8 @@ fun EditProfileScreen(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val userData = viewModel.userData.collectAsState()
-    val loading by viewModel.loading.collectAsState(initial = false)
+    val loading by viewModel.loading.collectAsState()
+    val isUpdating by viewModel.updating.collectAsState()
     val context = LocalContext.current
 
     var name by remember { mutableStateOf(userData.value?.username ?: "") }
@@ -86,7 +90,7 @@ fun EditProfileScreen(
         viewModel.getUserData(googleAuthUiClient)
     }
 
-    LaunchedEffect(userData) {
+    LaunchedEffect(userData.value) {
         name = userData.value?.username ?: ""
     }
 
@@ -126,12 +130,12 @@ fun EditProfileScreen(
                                 )
                             }
                             .border(2.dp, Color.Gray, CircleShape)
+                            .align(Alignment.CenterHorizontally)
                     }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Name Input Field
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -144,12 +148,18 @@ fun EditProfileScreen(
 
                 Button(
                     onClick = {
-
-                        navController.popBackStack()
+                        viewModel.updateUserProfile(name, imageUri) {
+                            navController.popBackStack()
+                        }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(yellow)
                 ) {
-                    Text("Save Changes")
+                    if (isUpdating) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else {
+                        Text("Save Changes")
+                    }
                 }
             }
         }
