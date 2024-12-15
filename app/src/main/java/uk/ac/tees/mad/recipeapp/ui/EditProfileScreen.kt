@@ -1,8 +1,14 @@
 package uk.ac.tees.mad.recipeapp.ui
 
 import android.app.AlertDialog
+import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -53,6 +60,9 @@ import com.google.accompanist.permissions.rememberPermissionState
 import uk.ac.tees.mad.recipeapp.viewmodels.ProfileViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uk.ac.tees.mad.recipeapp.ui.theme.yellow
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -71,6 +81,8 @@ fun EditProfileScreen(
 
     val cameraPermissionState =
         rememberPermissionState(permission = android.Manifest.permission.CAMERA)
+    val storagePermissionState =
+        rememberPermissionState(permission = android.Manifest.permission.READ_EXTERNAL_STORAGE)
 
     val galleryLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
@@ -78,12 +90,18 @@ fun EditProfileScreen(
         }
 
     val requestCameraLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-            if (success) {
-                imageUri?.let { uri ->
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
 
-                }
+            bitmap?.let { bm ->
+                val bytes = ByteArrayOutputStream()
+                bm.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+                val contentResolver = context.contentResolver
+                val path =
+                    MediaStore.Images.Media.insertImage(contentResolver, bitmap, "Title", null)
+                imageUri = Uri.parse(path)
+
             }
+
         }
 
     LaunchedEffect(Unit) {
@@ -125,6 +143,7 @@ fun EditProfileScreen(
                                 showImagePickerOptions(
                                     context,
                                     cameraPermissionState,
+                                    storagePermissionState,
                                     galleryLauncher,
                                     requestCameraLauncher
                                 )
@@ -170,8 +189,9 @@ fun EditProfileScreen(
 private fun showImagePickerOptions(
     context: Context,
     cameraPermissionState: PermissionState,
+    storagePermissionState: PermissionState,
     galleryLauncher: ActivityResultLauncher<String>,
-    requestCameraLauncher: ActivityResultLauncher<Uri>
+    requestCameraLauncher: ManagedActivityResultLauncher<Void?, Bitmap?>
 ) {
     val options = arrayOf("Camera", "Gallery")
 
@@ -181,17 +201,33 @@ private fun showImagePickerOptions(
             when (which) {
                 0 -> {
                     if (cameraPermissionState.status.isGranted) {
-
+                        requestCameraLauncher.launch(null)
                     } else {
                         cameraPermissionState.launchPermissionRequest()
                     }
                 }
 
                 1 -> {
-                    galleryLauncher.launch("image/*")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (storagePermissionState.status.isGranted) {
+                            galleryLauncher.launch("image/*")
+                        } else {
+                            storagePermissionState.launchPermissionRequest()
+                        }
+                    } else {
+                        galleryLauncher.launch("image/*")
+                    }
+
 
                 }
             }
         }
         .show()
+}
+
+private fun getCameraOutputOptions(context: Context): Uri {
+    val storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+    val fileName = "IMG_${System.currentTimeMillis()}.jpg"
+    val file = File(storageDir, fileName)
+    return FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
 }
