@@ -22,13 +22,13 @@ class TimerWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 
         var timeRemaining = timerDuration
         while (timeRemaining > 0) {
-            delay(60 * 1000)
-            timeRemaining -= 60000
+            delay(3 * 60 * 1000)
+            timeRemaining -= 180000
             sendNotification(recipeName, null, timeRemaining)
         }
 
         sendNotification(recipeName, "Timer finished", null)
-
+        Log.d("TimerWorker", "Timer finished for $recipeName")
         return Result.success()
     }
 

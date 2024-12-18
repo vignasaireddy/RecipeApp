@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -47,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -112,18 +114,13 @@ fun EditProfileScreen(
         name = userData.value?.username ?: ""
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = "Edit Profile") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    Scaffold(topBar = {
+        TopAppBar(title = { Text(text = "Edit Profile") }, navigationIcon = {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        })
+    }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -150,7 +147,8 @@ fun EditProfileScreen(
                             }
                             .border(2.dp, Color.Gray, CircleShape)
                             .align(Alignment.CenterHorizontally)
-                    }
+                    },
+                    contentScale = ContentScale.Crop
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -195,8 +193,7 @@ private fun showImagePickerOptions(
 ) {
     val options = arrayOf("Camera", "Gallery")
 
-    AlertDialog.Builder(context)
-        .setTitle("Select Image Source")
+    AlertDialog.Builder(context).setTitle("Select Image Source")
         .setItems(options) { dialog, which ->
             when (which) {
                 0 -> {
@@ -221,8 +218,7 @@ private fun showImagePickerOptions(
 
                 }
             }
-        }
-        .show()
+        }.show()
 }
 
 private fun getCameraOutputOptions(context: Context): Uri {

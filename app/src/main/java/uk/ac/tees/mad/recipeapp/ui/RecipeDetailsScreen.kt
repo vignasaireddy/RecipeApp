@@ -1,8 +1,11 @@
 package uk.ac.tees.mad.recipeapp.ui
 
 import android.os.Build
+import android.telecom.Call.Details
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,10 +17,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.outlined.BreakfastDining
+import androidx.compose.material.icons.outlined.FoodBank
+import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material.icons.outlined.MonitorWeight
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,7 +52,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -87,15 +99,7 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                 while (remainingTimer > 0) {
                     delay(1000)
                     remainingTimer -= 1000
-                    val formattedTime = SimpleDateFormat(
-                        "mm:ss",
-                        Locale.getDefault()
-                    )
-                    Log.d("Timer", "Before Formatted Time: $remainingTimer")
-
                     formattedTimer = "${remainingTimer / 1000 / 60}:${(remainingTimer / 1000) % 60}"
-                    Log.d("Timer", "Formatted Time: $formattedTimer")
-
                 }
             }
 
@@ -119,28 +123,21 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
     LaunchedEffect(Unit) {
         viewModel.fetchRecipeDetails(uri)
     }
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        recipe?.label ?: "Error",
-                        color = yellow,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = yellow)
-                    }
-                }
+    Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }, topBar = {
+        TopAppBar(title = {
+            Text(
+                recipe?.label ?: "Error",
+                color = yellow,
+                style = MaterialTheme.typography.headlineSmall
             )
-        }
-    ) { paddingValues ->
+        }, navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = yellow)
+            }
+        })
+    }) { paddingValues ->
         if (loading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center)
-            {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -161,41 +158,67 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
 
             Column(modifier = Modifier.padding(16.dp)) {
                 Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    DetailsComponent(
+                        icon = Icons.Outlined.Timer,
+                        text = if (recipe?.totalTime?.equals(0.0) == true) "N/A" else "${recipe?.totalTime}",
+                        desc = "mins"
+                    )
+                    DetailsComponent(
+                        icon = Icons.Outlined.LocalFireDepartment,
+                        text = df.format(recipe?.calories ?: 0.0),
+                        desc = "Cal"
+                    )
+                    DetailsComponent(
+                        icon = Icons.Outlined.FoodBank,
+                        text = df.format(recipe?.totalWeight ?: 0.0),
+                        desc = "g"
+                    )
+                    DetailsComponent(
+                        icon = Icons.Outlined.BreakfastDining,
+                        text = recipe?.dishType?.get(0)?.replaceFirstChar { ch ->
+                            ch.uppercase()
+                        } ?: "N/A",
+                        desc = ""
+                    )
+                }
                 Row {
                     Column {
-                        Text(
-                            text = "Total Time: ${if (recipe?.totalTime?.equals(0.0) == true) "N/A" else "${recipe?.totalTime} minutes)"}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(yellow)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Cuisine Type:")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${
+                                    recipe?.cuisineType?.joinToString(", ") { item ->
+                                        item.replaceFirstChar { ch ->
+                                            ch.uppercase()
+                                        }
+                                    }
+                                }",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = "Calories: ${df.format(recipe?.calories ?: 0.0)} kcal",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Total Weight: ${df.format(recipe?.totalWeight ?: 0.0)} g",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                    Spacer(modifier = Modifier.weight(1f))
-                    Column {
-                        Text(
-                            text = "Cuisine Type: ${recipe?.cuisineType?.joinToString(", ")}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Dish Type: ${recipe?.dishType?.joinToString(", ")}",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Meal Type: ${recipe?.mealType?.joinToString(", ")}",
+                            text = "Meal Type: ${
+                                recipe?.mealType?.map { item ->
+                                    item.replaceFirstChar { ch ->
+                                        ch.uppercase()
+                                    }
+                                }?.joinToString(", ")
+                            }",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -278,8 +301,7 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                         .fillMaxWidth()
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = yellow,
-                        contentColor = Color.Black
+                        containerColor = yellow, contentColor = Color.Black
                     )
                 ) {
                     Icon(
@@ -300,7 +322,45 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                     }
                 }
             }
+
+
         }
+    }
+}
+
+@Composable
+fun DetailsComponent(
+    icon: ImageVector,
+    text: String,
+    desc: String
+) {
+    Column(
+        modifier = Modifier
+            .clip(RoundedCornerShape(30.dp))
+            .background(yellow)
+            .padding(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(30.dp))
+                .background(Color.White)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Text(
+            text = desc, style = MaterialTheme.typography.titleSmall
+        )
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 
