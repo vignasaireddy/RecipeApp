@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -181,7 +182,7 @@ fun HomeScreen(navController: NavHostController, googleAuthUiClient: GoogleAuthU
                     Spacer(modifier = Modifier.height(8.dp))
                     LazyVerticalGrid(columns = GridCells.Fixed(2)) {
                         items(recipes) { recipe ->
-                            RecipeItem(recipe) {
+                            RecipeItem(modifier = Modifier.fillMaxHeight(), recipe) {
                                 val encodedUri = Uri.encode(recipe.uri)
                                 navController.navigate("recipe/$encodedUri")
                             }
@@ -196,9 +197,9 @@ fun HomeScreen(navController: NavHostController, googleAuthUiClient: GoogleAuthU
 }
 
 @Composable
-fun RecipeItem(recipe: Recipe, onClick: () -> Unit) {
+fun RecipeItem(modifier: Modifier = Modifier, recipe: Recipe, onClick: () -> Unit) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(8.dp),
         onClick = onClick,
@@ -222,7 +223,9 @@ fun RecipeItem(recipe: Recipe, onClick: () -> Unit) {
             Text(
                 text = recipe.label,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(8.dp)
+                modifier = Modifier.padding(8.dp),
+                maxLines = 2,
+                minLines = 2
             )
         }
     }

@@ -205,15 +205,9 @@ private fun showImagePickerOptions(
                 }
 
                 1 -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (storagePermissionState.status.isGranted) {
-                            galleryLauncher.launch("image/*")
-                        } else {
-                            storagePermissionState.launchPermissionRequest()
-                        }
-                    } else {
+
                         galleryLauncher.launch("image/*")
-                    }
+
 
 
                 }

@@ -123,30 +123,105 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
     LaunchedEffect(Unit) {
         viewModel.fetchRecipeDetails(uri)
     }
-    Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }, topBar = {
-        TopAppBar(title = {
-            Text(
-                recipe?.label ?: "Error",
-                color = yellow,
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }, navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = yellow)
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        bottomBar = {
+            Button(
+                onClick = {
+                    if (recipe?.totalTime != null) {
+                        if (recipe?.totalTime == 0.0) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Can't start timer for this recipe as no time provided from API",
+                                    actionLabel = "Error",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                if (notificationPermissionState.status.isGranted) {
+                                    viewModel.startTimer(
+                                        recipeName = recipe?.label ?: "",
+                                        duration = recipe?.totalTime ?: 0.0,
+                                        context = context
+                                    )
+                                } else {
+                                    notificationPermissionState.launchPermissionRequest()
+                                }
+                            } else {
+                                viewModel.startTimer(
+                                    recipeName = recipe?.label ?: "",
+                                    duration = recipe?.totalTime ?: 0.0,
+                                    context = context
+                                )
+                            }
+                        }
+                    } else {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Can't start timer for this recipe as no time provided from API",
+                                actionLabel = "Error",
+                                duration = SnackbarDuration.Short
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = yellow, contentColor = Color.Black
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Timer,
+                    contentDescription = "Timer",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                when (timerState) {
+                    is TimerState.Stopped -> Text("Start Timer")
+                    is TimerState.Running -> {
+
+                        Text("Remaining Time: ${(formattedTimer)} minutes")
+                    }
+
+
+                    is TimerState.Finished -> Text("Timer Finished")
+                }
             }
-        })
-    }) { paddingValues ->
+        }
+    ) { paddingValues ->
         if (loading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = yellow)
+                }
+                Text(
+                    text = recipe?.label ?: "Error",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = yellow
+                )
+            }
+
             Image(
                 painter = rememberAsyncImagePainter(recipe?.image),
                 contentDescription = recipe?.label,
@@ -155,7 +230,6 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                     .height(300.dp),
                 contentScale = ContentScale.Crop
             )
-
             Column(modifier = Modifier.padding(16.dp)) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -185,46 +259,64 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                         desc = ""
                     )
                 }
-                Row {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(yellow)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "Cuisine Type:")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "${
-                                    recipe?.cuisineType?.joinToString(", ") { item ->
-                                        item.replaceFirstChar { ch ->
-                                            ch.uppercase()
-                                        }
-                                    }
-                                }",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(yellow)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Meal Type: ${
+                            text = "Cuisine Type:",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${
+                                recipe?.cuisineType?.joinToString(", ") { item ->
+                                    item.replaceFirstChar { ch ->
+                                        ch.uppercase()
+                                    }
+                                }
+                            }",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = yellow
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(yellow)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Meal Type:",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = " ${
                                 recipe?.mealType?.map { item ->
                                     item.replaceFirstChar { ch ->
                                         ch.uppercase()
                                     }
                                 }?.joinToString(", ")
                             }",
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.titleMedium,
+                            color = yellow
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
 
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -257,70 +349,7 @@ fun RecipeDetailsScreen(uri: String?, onBack: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        if (recipe?.totalTime != null) {
-                            if (recipe?.totalTime == 0.0) {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Can't start timer for this recipe as no time provided from API",
-                                        actionLabel = "Error",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                }
-                            } else {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    if (notificationPermissionState.status.isGranted) {
-                                        viewModel.startTimer(
-                                            recipeName = recipe?.label ?: "",
-                                            duration = recipe?.totalTime ?: 0.0,
-                                            context = context
-                                        )
-                                    } else {
-                                        notificationPermissionState.launchPermissionRequest()
-                                    }
-                                } else {
-                                    viewModel.startTimer(
-                                        recipeName = recipe?.label ?: "",
-                                        duration = recipe?.totalTime ?: 0.0,
-                                        context = context
-                                    )
-                                }
-                            }
-                        } else {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = "Can't start timer for this recipe as no time provided from API",
-                                    actionLabel = "Error",
-                                    duration = SnackbarDuration.Short
-                                )
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = yellow, contentColor = Color.Black
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Timer,
-                        contentDescription = "Timer",
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    when (timerState) {
-                        is TimerState.Stopped -> Text("Start Timer")
-                        is TimerState.Running -> {
 
-                            Text("Remaining Time: ${(formattedTimer)} minutes")
-                        }
-
-
-                        is TimerState.Finished -> Text("Timer Finished")
-                    }
-                }
             }
 
 
