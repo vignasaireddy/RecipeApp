@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "uk.ac.tees.mad.recipeapp"
+    namespace = "uk.ac.tees.mad.ra"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "uk.ac.tees.mad.recipeapp"
+        applicationId = "uk.ac.tees.mad.ra"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -43,7 +43,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.7"
     }
     packaging {
         resources {

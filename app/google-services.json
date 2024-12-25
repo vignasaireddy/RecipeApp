@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "306161792065",
-    "project_id": "recipeapp-b7da4",
+    "project_number": "810710003391",
+    "project_id": "recipeapp-a9a13",
     "storage_bucket": "recipeapp-b7da4.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:306161792065:android:9dc029a4bcde7a098942c0",
+        "mobilesdk_app_id": "1:810710003391:android:aa59e50977db82513b200a",
         "android_client_info": {
-          "package_name": "uk.ac.tees.mad.recipeapp"
+          "package_name": "uk.ac.tees.mad.ra"
         }
       },
       "oauth_client": [
         {
-          "client_id": "306161792065-e584rhsj55n6gntqjhhehk3kjsb14cu9.apps.googleusercontent.com",
+          "client_id": "810710003391-j6lqa4tf76fur08jposmb8a62c7gijl7.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "uk.ac.tees.mad.recipeapp",
+            "package_name": "uk.ac.tees.mad.ra",
             "certificate_hash": "f94707b4fd17a677933e8e276332f7ad834467ae"
           }
         },
         {
-          "client_id": "306161792065-pceahnog34ksuh6eep82sr22fanhhi1p.apps.googleusercontent.com",
+          "client_id": "810710003391-qcq1o9abf030ukbre3q3m48e7nv7u2lb.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBu4N-j7jUqbfHajxzzoScX-hp8RYT1-1g"
+          "current_key": "AIzaSyCIX6MYk9gJ3VSVBu3CqRE9K5nMTaOAzhc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "306161792065-pceahnog34ksuh6eep82sr22fanhhi1p.apps.googleusercontent.com",
+              "client_id": "810710003391-qcq1o9abf030ukbre3q3m48e7nv7u2lb.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
